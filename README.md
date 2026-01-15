@@ -374,10 +374,7 @@ function computeAvailableTargets(tile, index) {
 
 ## Демо-видео
 
-<video width="800" controls>
-  <source src="pic/gameplay-demo.mov" type="video/quicktime">
-  Ваш браузер не поддерживает воспроизведение видео.
-</video>
+![Демо-видео](pic/gameplay-demo.gif)
 
 *Видео демонстрирует пример игрового процесса - ход одного игрока*
 
