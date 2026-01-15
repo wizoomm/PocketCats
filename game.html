@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Игра - Карманные Кошки</title>
+  <link rel="stylesheet" href="css/style.css">
+
+  <style>
+    /* Дополнительные правки по позиционированию оверлеев на поле */
+    .game-board-wrap { position: relative !important; }
+    .board-overlay {
+      position: absolute !important;
+      inset: 0 !important;
+      display: none !important;
+      align-items: center !important;
+      justify-content: center !important;
+      background: rgba(0, 0, 0, 0.45) !important;
+      backdrop-filter: blur(4px) !important;
+      z-index: 9999 !important;
+    }
+    .board-overlay.is-visible { display: flex !important; }
+
+    .board-overlay__card--closable {
+    position: relative !important;
+    direction: ltr !important; 
+    }
+    #finishedCloseBtn.overlay-close {
+    position: absolute !important;
+    direction: ltr !important; 
+    top: 14px !important;
+    right: 14px !important;
+    width: 34px !important;
+    height: 34px !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    border: none !important;
+    border-radius: 50% !important;
+    background: rgba(0,0,0,0.06) !important;
+
+    font-size: 20px !important;
+    line-height: 1 !important;
+
+    cursor: pointer !important;
+    color: #555 !important;
+    z-index: 10 !important;
+    }
+
+  </style>
+  </head>
+  <body>
+
+  <div class="game-container">
+  <div class="game-sidebar game-sidebar-left">
+    <div class="game-sidebar-rectangle" id="leftInfo1"></div>
+    <div class="game-sidebar-rectangle" id="leftInfo2"></div>
+    <p>До конца хода осталось:</p>
+    <p id="turnTimer">—</p>
+  </div>
+
+  <div class="game-board-wrap">
+    <div class="game-board" id="gameBoard"></div>
+    <div class="board-overlay" id="waitingOverlay" aria-live="polite">
+      <div class="board-overlay__card">
+        <div class="board-overlay__title">Ожидаем второго игрока…</div>
+        <div class="board-overlay__text">
+          Как только он подключится, игра начнётся автоматически.
+        </div>
+      </div>
+    </div>
+    <div class="board-overlay" id="finishedOverlay" aria-live="polite">
+      <div class="board-overlay__card board-overlay__card--closable">
+    
+        <button class="overlay-close" id="finishedCloseBtn" aria-label="Закрыть">
+          ✕
+        </button>
+    
+        <div class="board-overlay__title" id="finishedTitle">Победа!</div>
+        <div class="board-overlay__text" id="finishedText"></div>
+    
+      </div>
+    </div>
+    
+  </div>
+
+  <div class="game-sidebar game-sidebar-right">
+    <button class="btn-secondary" type="button" id="rulesBtn">Правила игры</button>
+    <div class="game-sidebar-rectangle" id="rightInfo1"></div>
+    <div class="game-sidebar-rectangle" id="rightInfo2"></div>
+  </div>
+</div>
+
+<div class="logout-link">
+  <a href="rooms.html" id="backToRoomsLink">выйти из игры</a>
+</div>
+
+<script>
+  // Кнопка перехода к правилам игры
+  document.getElementById('rulesBtn').addEventListener('click', () => {
+    window.location.href = 'rules.html';
+  });
+
+  // Обработка выхода из игры (уведомляем сервер и возвращаемся в комнаты)
+  document.getElementById('backToRoomsLink').addEventListener('click', async (e) => {
+    e.preventDefault();
+
+    try {
+      const fd = new FormData();
+      fd.append('token', localStorage.getItem('token') || '');
+      fd.append('game_id', String(gameId));
+
+      const resp = await fetch('api/leave_game.php', {
+        method: 'POST',
+        body: fd,
+        cache: 'no-store'
+      });
+
+      // Если сервер вернул ошибку, покажем её
+      if (!resp.ok) {
+        console.error('leave_game network error', resp.status);
+      } else {
+        const text = await resp.text();
+        // leave_game возвращает JSON строкой
+        try {
+          const j = JSON.parse(text);
+          if (j.status && j.status !== 'success') {
+            console.warn('leave_game error:', j);
+          }
+        } catch (_) {
+          console.log('leave_game raw:', text);
+        }
+      }
+    } catch (err) {
+      console.error('leave_game exception:', err);
+    } finally {
+      localStorage.removeItem('gameId');
+      window.location.href = 'rooms.html';
+    }
+  });
+const GRID_SIZE = 5;
+  const board = document.getElementById('gameBoard');
+  const waitingOverlay = document.getElementById('waitingOverlay');
+
+  const finishedOverlay = document.getElementById('finishedOverlay');
+    const finishedTitle = document.getElementById('finishedTitle');
+    const finishedText = document.getElementById('finishedText');
+
+  const finishedCloseBtn = document.getElementById('finishedCloseBtn');
+  // Кнопка закрытия модального окна завершения игры
+  finishedCloseBtn.addEventListener('click', () => {
+    setFinishedOverlayVisible(false);
+  });
+  
+    let gameFinished = false;
+  
+    function setFinishedOverlayVisible(isVisible) {
+      finishedOverlay.classList.toggle('is-visible', isVisible);
+    }
+  
+    function renderFinishedOverlay(state) {
+      if (!state?.game_finished) {
+        setFinishedOverlayVisible(false);
+        return;
+      }
+  
+      // окно конца игры важнее ожидания второго игрока
+      setWaitingOverlayVisible(false);
+      setFinishedOverlayVisible(true);
+  
+      const maxPts = (typeof state.max_points === 'number') ? state.max_points : null;
+  
+      if (state.is_tie) {
+        const winners = Array.isArray(state.winners) ? state.winners : [];
+        const names = winners.map(w => w.login).filter(Boolean).join(', ');
+        finishedTitle.textContent = 'Конец игры: ничья';
+        finishedText.innerHTML =
+          `Победители: <b>${names || '—'}</b>` +
+          (maxPts != null ? `<br>Макс. очки: <b>${maxPts}</b>` : '');
+        return;
+      }
+  
+      const w = state.winner;
+      const winnerName = w?.login || '—';
+      const pts = (typeof w?.points === 'number') ? w.points : maxPts;
+  
+      finishedTitle.textContent = 'Конец игры';
+      finishedText.innerHTML =
+        `Победил игрок: <b>${winnerName}</b>` +
+        (pts != null ? `<br>Очки: <b>${pts}</b>` : '');
+    }
+
+  const leftInfo1 = document.getElementById('leftInfo1');
+  const leftInfo2 = document.getElementById('leftInfo2');
+  const rightInfo1 = document.getElementById('rightInfo1');
+  const rightInfo2 = document.getElementById('rightInfo2');
+  const turnTimerEl = document.getElementById('turnTimer');
+
+  const token = localStorage.getItem('token');
+
+  function getGameIdFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const fromUrl = params.get('game_id');
+    if (fromUrl) return Number(fromUrl);
+    const fromStorage = localStorage.getItem('gameId');
+    return fromStorage ? Number(fromStorage) : null;
+  }
+  const gameId = getGameIdFromUrl();
+
+  if (!token || !gameId) {
+    alert('Нет токена или id игры. Вернёмся к списку комнат.');
+    window.location.href = 'rooms.html';
+  }
+
+  function setWaitingOverlayVisible(isVisible) {
+    waitingOverlay.classList.toggle('is-visible', isVisible);
+  }
+
+  // состояние поля
+  // Массив из 25 клеток (5x5)
+  let currentCells = new Array(GRID_SIZE * GRID_SIZE).fill(null);
+  let lastTilesFromServer = [];
+
+  let selectedIndex = null;
+  let availableTargets = [];
+
+  let isMyTurn = false;
+  let playersCountGlobal = 0;
+
+  // чтобы понимать смену хода
+  let lastTurnInfo = '';
+  let lastIsMyTurn = false;
+
+  let autoUpdateId = null;
+  let requestInFlight = false;
+
+
+  // блокируем быстрые повторные клики (чтобы не улетало несколько open_tile подряд)
+  let actionInFlight = false;
+  function startAutoUpdate(intervalMs = 1000) {
+    if (autoUpdateId !== null) return;
+    autoUpdateId = setInterval(() => {
+      // пока игрок выбирает цель (после открытия тайла) не перерисовываем и не сбиваем подсветку
+      if (selectedIndex !== null) return;
+      if (gameFinished) return;
+      loadGameState();
+    }, intervalMs);
+  }
+
+  async function callApi(endpoint, formData) {
+    const response = await fetch('api/' + endpoint, {
+      method: 'POST',
+      body: formData,
+      cache: 'no-store'
+    });
+    if (!response.ok) throw new Error('Network error: ' + response.status);
+    return await response.json();
+  }
+
+  // Отрисовка информационных блоков слева/справа и таймера хода
+  function renderInfo(state) {
+    leftInfo1.textContent = 'Игра №' + (state.game?.id ?? gameId);
+
+    playersCountGlobal = Array.isArray(state.players) ? state.players.length : 0;
+    gameFinished = !!state.game_finished;
+
+    renderFinishedOverlay(state);
+
+    setWaitingOverlayVisible(!gameFinished && playersCountGlobal < 2);
+    if (state.me) {
+  const clan = state.me.clan || '—';
+  let color = '';
+
+  if (clan === 'Пушистые бандиты') {
+    color = '#A3585E';
+  } else if (clan === 'Гурманы') {
+    color = '#DAD77D';
+  }
+
+  if (color) {
+  leftInfo2.innerHTML = `
+    <div style="display:flex; flex-direction:column;">
+      <div>
+        Вы: ${state.me.login} в клане ${clan}
+      </div>
+
+      <div style="margin-top:6px; display:flex; align-items:center; gap:8px;">
+        <span>Ваш цвет клана:</span>
+        <span
+          style="
+            display:inline-block;
+            width:24px;
+            height:24px;
+            border-radius:50%;
+            background:${color};
+          "
+        ></span>
+      </div>
+    </div>
+  `;
+} else {
+  leftInfo2.textContent = `Вы: ${state.me.login} в клане ${clan}`;
+}
+
+
+
+  isMyTurn = !!state.me.is_my_turn;
+} else {
+  leftInfo2.textContent = '';
+  isMyTurn = false;
+}
+
+
+    if (state.players && Array.isArray(state.players)) {
+      rightInfo1.innerHTML = state.players
+        .map(p => {
+          const meMark = (state.me && p.id === state.me.id) ? ' (вы)' : '';
+          const pts =
+  (gameFinished && typeof p.points === 'number')
+    ? `, очки: ${p.points}`
+    : '';
+return `#${p.player_number} ${p.login}${meMark}${pts}`;
+
+        })
+        .join('<br>');
+    } else {
+      rightInfo1.textContent = '';
+    }
+
+    rightInfo2.textContent = state.turn_info || '';
+
+    if (playersCountGlobal < 2) {
+      turnTimerEl.textContent = 'Ожидание…';
+    } else if (typeof state.turn_seconds_left === 'number') {
+      turnTimerEl.textContent = state.turn_seconds_left + ' секунд';
+    } else {
+      turnTimerEl.textContent = '—';
+    }
+  }
+
+  // Вспомогательные функции для выбора правильной картинки тайла
+  function getTileId(tile) {
+    return tile.tile_id ?? tile.tileid ?? tile.tileID;
+  }
+
+  function getTileFolder(tile) {
+    if (tile.type === 'prey') return 'prey';
+    if (tile.type === 'cat') {
+      if (tile.clan === 'Пушистые бандиты') return 'bandits';
+      if (tile.clan === 'Гурманы') return 'gourmets';
+      return 'bandits';
+    }
+    return 'prey';
+  }
+
+  function getTileImage(tile) {
+    if (!tile || tile.status !== 'opened') return 'img/tileBack.svg';
+    const id = getTileId(tile);
+    const folder = getTileFolder(tile);
+    if (id == null || !folder) return 'img/tileBack.svg';
+    return `img/${folder}/tileid_${id}.svg`;
+  }
+
+  function getTileImageFront(tile) {
+    const id = getTileId(tile);
+    const folder = getTileFolder(tile);
+    if (!tile || tile.status !== 'opened' || id == null || !folder) return 'img/tileBack.svg';
+    return `img/${folder}/tileid_${id}.svg`;
+  }
+
+  function getTileImageGreen(tile) {
+    if (tile.status === 'closed') return 'img/tileBackGreen.svg';
+    return `img/${getTileFolder(tile)}/tileid_${getTileId(tile)}G.svg`;
+  }
+
+
+  // Конвертация индекса ячейки в координаты и обратно
+  function indexToCoords(index) {
+    return { x: index % GRID_SIZE, y: Math.floor(index / GRID_SIZE) };
+  }
+  function coordsToIndex(x, y) {
+    return y * GRID_SIZE + x;
+  }
+
+  // отрисовка поля
+
+  function renderBoard(tilesFromServer) {
+    board.innerHTML = '';
+
+    // 1) заполняем все клетки "закрытыми" плейсхолдерами
+    currentCells = new Array(GRID_SIZE * GRID_SIZE).fill(null);
+    for (let y = 0; y < GRID_SIZE; y++) {
+      for (let x = 0; x < GRID_SIZE; x++) {
+        currentCells[coordsToIndex(x, y)] = {
+          coordinateX: x,
+          coordinateY: y,
+          status: 'closed'
+        };
+      }
+    }
+
+    // 2) накладываем opened, которые пришли с сервера
+    (tilesFromServer || []).forEach(tile => {
+      const x = tile.coordinatex ?? tile.coordinateX;
+      const y = tile.coordinatey ?? tile.coordinateY;
+      if (x === undefined || y === undefined) return;
+      currentCells[coordsToIndex(x, y)] = tile; 
+    });
+
+    // 3) рисуем кнопки
+    for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
+      const tile = currentCells[i];
+
+      const btn = document.createElement('button');
+      btn.className = 'game-tile';
+
+      const img = document.createElement('img');
+      img.src = getTileImage(tile);
+
+      btn.appendChild(img);
+      btn.addEventListener('click', () => handleTileClick(i));
+      board.appendChild(btn);
+    }
+  }
+
+  function computeAvailableTargets(tile, index) {
+    const { x, y } = indexToCoords(index);
+    const result = [];
+
+    if (!tile || tile.status !== 'opened') return result;
+
+    if (tile.type === 'prey') {
+      for (let dx = -1; dx <= 1; dx++) {
+        for (let dy = -1; dy <= 1; dy++) {
+          if (dx === 0 && dy === 0) continue;
+          const nx = x + dx, ny = y + dy;
+          if (nx < 0 || nx >= GRID_SIZE || ny < 0 || ny >= GRID_SIZE) continue;
+          const idx = coordsToIndex(nx, ny);
+          if (currentCells[idx]) result.push(idx);
+        }
+      }
+    } else if (tile.type === 'cat') {
+      [1,2].forEach(step => {
+        [
+          {dx: step, dy: 0}, {dx: -step, dy: 0},
+          {dx: 0, dy: step}, {dx: 0, dy: -step}
+        ].forEach(({dx,dy}) => {
+          const nx = x + dx, ny = y + dy;
+          if (nx < 0 || nx >= GRID_SIZE || ny < 0 || ny >= GRID_SIZE) return;
+          const idx = coordsToIndex(nx, ny);
+          if (currentCells[idx]) result.push(idx);
+        });
+      });
+    }
+    return [...new Set(result)];
+  }
+
+  function applySelectionAtIndex(index) {
+    const tile = currentCells[index];
+    if (!tile || tile.status !== 'opened') return;
+
+    selectedIndex = index;
+    availableTargets = computeAvailableTargets(tile, index);
+
+    // подсветка выбранного
+    const btnSel = board.children[index];
+    if (btnSel) {
+      btnSel.classList.add('tile-selected');
+      const img = btnSel.querySelector('img');
+      if (img) img.src = getTileImageFront(tile);
+    }
+
+    // подсветка целей
+    availableTargets.forEach(i => {
+      const btn = board.children[i];
+      if (btn) btn.classList.add('tile-target');
+    });
+  }
+
+  function applySelectionByTileInGameId(tileInGameId) {
+    if (tileInGameId == null) return;
+    const idx = currentCells.findIndex(t => {
+      if (!t) return false;
+      const id = t.tile_in_game_id ?? t.tileingameid ?? t.tileInGameID;
+      return id === tileInGameId;
+    });
+    if (idx >= 0) applySelectionAtIndex(idx);
+  }
+
+
+
+  function restoreSelectionFromServer(state) {
+    if (!state || !isMyTurn) return;
+    const mot = state.my_open_tile;
+    const id = mot?.tile_in_game_id ?? mot?.tileInGameID ?? mot?.tileingameid;
+    if (id != null) {
+      applySelectionByTileInGameId(id);
+    }
+  }
+
+  async function loadGameState() {
+    if (requestInFlight) return;
+    requestInFlight = true;
+
+    const fd = new FormData();
+    fd.append('token', token);
+    fd.append('game_id', gameId);
+
+    try {
+      const state = await callApi('get_game_state.php', fd);
+      if (state.status && state.status !== 'success') return;
+
+      renderInfo(state);
+
+      // если игра закончилась, показываем финальное окно и просто рисуем поле
+      if (gameFinished) {
+        selectedIndex = null;
+        availableTargets = [];
+        lastTilesFromServer = state.tiles || [];
+        renderBoard(lastTilesFromServer);
+        return;
+      }
+
+      // детект смены хода
+      const newTurnInfo = state.turn_info || '';
+      const turnChanged = (newTurnInfo !== lastTurnInfo) || (lastIsMyTurn !== isMyTurn);
+      lastTurnInfo = newTurnInfo;
+      lastIsMyTurn = isMyTurn;
+
+      // если ход сменился — сброс
+      if (turnChanged) {
+        selectedIndex = null;
+        availableTargets = [];
+        lastTilesFromServer = state.tiles || [];
+        renderBoard(lastTilesFromServer);
+        restoreSelectionFromServer(state);
+        return;
+      }
+
+      // если мы выбрали тайл — не перерисовываем
+      if (selectedIndex !== null) return;
+
+      lastTilesFromServer = state.tiles || [];
+      renderBoard(lastTilesFromServer);
+      restoreSelectionFromServer(state);
+
+    } catch (e) {
+      console.error(e);
+    } finally {
+      requestInFlight = false;
+    }
+  }
+
+
+  // Основная обработка кликов по клеткам (открытие и ход)
+  async function handleTileClick(index) {
+    const tile = currentCells[index]; 
+
+    if (actionInFlight) return;
+
+    if (gameFinished) return;
+
+    if (playersCountGlobal < 2) return;
+
+    if (!isMyTurn) {
+      alert('Сейчас не ваш ход');
+      return;
+    }
+
+    // если уже выбрали тайл, второй клик только по подсвеченным целям
+    if (selectedIndex !== null && !availableTargets.includes(index)) {
+      return;
+    }
+
+    // 1) открыть
+    if (selectedIndex === null) {
+      // открываем только закрытую клетку
+      if (!tile || tile.status !== 'closed') return;
+
+      const {x, y} = indexToCoords(index);
+
+      const fd = new FormData();
+      fd.append('token', token);
+      fd.append('game_id', gameId);
+      fd.append('x', x);
+      fd.append('y', y);
+
+      actionInFlight = true;
+      try {
+        const r = await callApi('open_tile.php', fd);
+        if (r.status !== 'success') {
+          await loadGameState();
+          const msg = (r.message || '').toLowerCase();
+          if (msg && !msg.includes('уже открыли тайл') && !msg.includes('уже открыт')) {
+            alert(r.message || 'Не удалось открыть тайл');
+          }
+          return;
+        }
+
+      await loadGameState();
+
+      const openedNow = currentCells[index];
+      if (!openedNow || openedNow.status !== 'opened') {
+        return;
+      }
+
+      selectedIndex = index;
+      availableTargets = computeAvailableTargets(openedNow, index);
+
+      board.children[index].classList.add('tile-selected');
+      board.children[index].querySelector('img').src = getTileImageFront(openedNow);
+
+      availableTargets.forEach(i => {
+        const targetTile = currentCells[i];
+        if (!targetTile) return;
+        board.children[i].querySelector('img').src = getTileImageGreen(targetTile);
+      });
+
+      } finally {
+        actionInFlight = false;
+      }
+
+      return;
+    }
+
+    // 2) ход (перемещение)
+    const targetX = index % GRID_SIZE;
+    const targetY = Math.floor(index / GRID_SIZE);
+
+    const fd = new FormData();
+    fd.append('token', token);
+    fd.append('game_id', gameId);
+    fd.append('target_x', targetX);
+    fd.append('target_y', targetY);
+
+    actionInFlight = true;
+    try {
+      const resp = await callApi('move_tile.php', fd);
+    if (resp.status && resp.status !== 'ok' && resp.status !== 'success') {
+      alert(resp.message || 'Неверный ход');
+    }
+
+    // после хода обновляем поле сервером
+    selectedIndex = null;
+    availableTargets = [];
+    await loadGameState();
+    } finally {
+      actionInFlight = false;
+    }
+  }
+
+  // старт
+  // При загрузке страницы сразу получаем состояние игры и запускаем автообновление
+  loadGameState();
+  startAutoUpdate(1000);
+</script>
+</body>
+</html>
+

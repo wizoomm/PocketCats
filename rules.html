@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Правила - Карманные Кошки</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="rules-body">
+    <div class="rules-back-button">
+        <button class="btn-secondary" type="button" id="backButton">Назад</button>
+    </div>
+    <div class="rules">
+        <img src="img/rules.svg" alt="Правила игры">
+    </div>
+    <div class="rules-container">
+
+        <div class="rules-text-block">
+            <p>По очереди открывайте и меняйте местами тайлы. Выгодно расставьте своих котов на поле и постарайтесь поймать как можно больше добычи, чтобы победить!</p>
+        </div>
+
+        <div class="rules-text-block">
+            <p>В начале игры игрокам рандомно определяется их клан кошек, за этот клан они будут играть. В комнате игры появляется поле 5 на 5 с рандомно расположенными закрытыми карточками (тайлами), на которых изображены кошки одного и другого клана, а также добыча. У каждого тайла есть сила.</p>
+        </div>
+
+        <div class="rules-text-block">
+            <p>Игроки по очереди открывают любой закрытый тайл и меняют его с другим тайлом в соответствии с тем, кто изображен на открытом тайле. Далее ход переходит сопернику. Когда все тайлы на поле оказываются перевернуты, то происходит подсчет очков. Побеждает тот у кого больше всего очков пойманной добычи.</p>
+        </div>
+
+        <div class="rules-example">
+            <div class="rules-example-image">
+                <img src="img/rules/rules1.svg" alt="Пример движения кошки 1">
+            </div>
+            <div class="rules-example-image">
+                <img src="img/rules/rules2.svg" alt="Пример движения кошки 2">
+            </div>
+            <div class="rules-example-text">
+                <p>Если это тайл кошки, то его можно поменять на расстояние одной или двух клеток в том же ряду или колонке</p>
+            </div>
+            <div class="rules-example-image">
+                <img src="img/rules/rules5.svg" alt="Фото кошки">
+            </div>
+        </div>
+
+        <div class="rules-example">
+            <div class="rules-example-image">
+                <img src="img/rules/rules3.svg" alt="Пример движения добычи 1">
+            </div>
+            <div class="rules-example-image">
+                <img src="img/rules/rules4.svg" alt="Пример движения добычи 2">
+            </div>
+            <div class="rules-example-text">
+                <p>Если это тайл добычи, то его можно поменять местами с любым тайлом вокруг него</p>
+            </div>
+            <div class="rules-example-image">
+                <img src="img/rules/rules6.svg" alt="Фото добычи">
+            </div>
+        </div>
+
+        <div class="rules-text-block">
+            <p>В конце игры происходит подсчёт очков. Вокруг каждой добычи подсчитываются очки атаки одного и другого клана. Для этого складываются очки ортогонально примыкающих тайлов к добыче каждого клана. Тайл добычи получает тот клан, у которого сила атаки оказалась выше. В случае с ничьей тайл добычи не достаётся никому. Так происходит с каждым тайлом добычи. Затем полученные очки добычи у кланов складываются и побеждает тот, у кого очков оказывается больше.</p>
+        </div>
+
+        <div class="rules-example">
+            <div class="rules-example-image">
+                <img src="img/rules/rules7.svg" alt="Пример подсчета очков">
+            </div>
+            <div class="rules-example-text">
+                <p>На примере за этот тайл добычи будут бороться: красный клан с силой атаки 3, красный клан с силой атаки 6 и зеленый клан с силой атаки 1. Складываем силы атаки и получаем, что у красных сила атаки 9, а у зеленых 1. Значит этот тайл добычи забирают красные, так как сила атаки на этот тайл добычи больше у красных.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Кнопка возвращение на предыдущую страницу в истории браузера
+        document.getElementById('backButton').addEventListener('click', () => {
+            window.history.back();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Зарегистрироваться - Карманные Кошки</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="img/nameGame.svg" alt="Карманные Кошки">
+        </div>
+        
+        <div class="header">
+            <h1>Зарегистрироваться</h1>
+            <div class="link-text">
+                или <a href="entrance.html">войти в аккаунт</a>
+            </div>
+        </div>
+
+        <form class="form-group" id="regForm">
+            <input type="text" name="login" placeholder="Никнейм" required>
+            <input type="password" name="password" placeholder="Пароль" required>
+        </form>
+
+        <div class="buttons">
+            <button class="btn-primary" type="submit" form="regForm">Зарегистрироваться</button>
+            <button class="btn-secondary" type="button" id="rulesBtn">Правила игры</button>
+        </div>
+    </div>
+
+    <script>
+        // Находим форму регистрации по id
+        const regForm = document.getElementById('regForm');
+        
+        // Обработчик отправки формы регистрации
+        regForm.addEventListener('submit', async (event) => {
+            // Отменяем стандартную отправку формы, чтобы работать через fetch 
+            event.preventDefault();
+        
+            // Собираем данные формы в объект FormData (login, password)
+            const formData = new FormData(regForm);
+        
+            try {
+                // Отправляем POST-запрос на бэкенд для регистрации пользователя
+                const response = await fetch('api/register.php', {
+                    method: 'POST',
+                    body: formData
+                });
+        
+                // Преобразуем ответ сервера в JSON
+                const data = await response.json();
+        
+                // Если регистрация прошла успешно
+                if (data.status === 'success') {
+                    // Сохраняем полученный токен в localStorage
+                    localStorage.setItem('token', data.token);
+                    // Очищаем возможный сохранённый id игры, чтобы начать с лобби
+                    localStorage.removeItem('gameId');
+                    // Перенаправляем пользователя на страницу со списком комнат
+                    window.location.href = 'rooms.html';
+                } else {
+                    // В случае ошибки регистрации показываем сообщение с сервера
+                    alert(data.message || 'Ошибка регистрации');
+                }
+            } catch (err) {
+                // Если сервер недоступен или произошла иная ошибка сети
+                alert('Ошибка подключения к серверу');
+            }
+        });
+        
+        document.getElementById('rulesBtn')
+            .addEventListener('click', () => {
+                window.location.href = 'rules.html';
+            });
+    </script>
+
+</body>
+</html>

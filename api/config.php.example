@@ -1,0 +1,41 @@
+<?php
+// Общая конфигурация подключения к БД и базовые настройки для всех API-скриптов
+header('Content-Type: application/json; charset=utf-8');
+
+// Включаем отображение всех ошибок PHP
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// Данные для подключения к PostgreSQL
+// Скопируйте этот файл в config.php и заполните своими данными
+$host     = "your_host";
+$port     = "5432";
+$dbname   = "your_database";
+$user     = "your_username";
+$password = "your_password";
+
+try {
+    // Формируем DSN-строку для подключения к PostgreSQL
+    $dsn = "pgsql:host=$host;port=$port;dbname=$dbname;";
+
+    // Создаём объект подключения PDO
+    $conn = new PDO(
+        $dsn,
+        $user,
+        $password,
+        [
+            // Ошибки PDO будут вызывать исключения
+            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+            // По умолчанию будем получать ассоциативные массивы
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        ]
+    );
+
+} catch (PDOException $e) {
+    // Если подключиться не получилось, отправляем JSON-ошибку и выходим
+    echo json_encode([
+        "status"  => "error",
+        "message" => "Cannot connect: " . $e->getMessage()
+    ]);
+    exit;
+}

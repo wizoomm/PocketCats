@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Комнаты – Карманные Кошки</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="rooms-body">
+<div class="container">
+
+    <div class="logo">
+        <img src="img/nameGame.svg" alt="Карманные Кошки">
+    </div>
+
+    <div class="rooms-wrapper">
+        <div class="rooms-list"></div>
+    </div>
+
+    <div class="rooms-buttons">
+        <button class="btn-primary" id="createRoomBtn">Создать комнату</button>
+        <button class="btn-secondary" id="rulesBtn">Правила игры</button>
+    </div>
+</div>
+
+<div class="logout-link">
+    <a href="#" id="logoutLink">выйти из аккаунта</a>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    // Токен авторизации берём из localStorage
+    const token = localStorage.getItem("token");
+    // DOM-элементы на странице
+    const roomsListEl = document.querySelector(".rooms-list");
+    const createBtn = document.getElementById("createRoomBtn");
+    const rulesBtn = document.getElementById("rulesBtn");
+    const logoutLink = document.getElementById("logoutLink");
+
+    // Если токена нет отправляем пользователя на страницу входа
+    if (!token) {
+        window.location.href = "entrance.html";
+        return;
+    }
+
+    // Обработчик выхода пользователя из аккаунта
+    logoutLink.addEventListener("click", async (event) => {
+        event.preventDefault();
+
+        const formData = new FormData();
+        formData.append("token", token);
+
+        try {
+            const response = await fetch("api/logout.php", {  
+                method: "POST",
+                body: formData
+            });
+
+            const raw = await response.text();
+            console.log("logout.php raw:", raw);
+
+            try {
+                const data = JSON.parse(raw);
+                console.log("Logout JSON:", data);
+            } catch (e) {
+                console.error("Logout JSON parse error:", e);
+            }
+        } catch (err) {
+            console.error("Logout fetch error:", err);
+        } finally {
+            localStorage.removeItem("token");
+            localStorage.removeItem("gameId");
+            window.location.href = "entrance.html";
+        }
+    });
+
+    // Получение списка комнат с сервера и отрисовка их на странице
+    async function loadRooms() {
+        roomsListEl.innerHTML = "Загружаем комнаты...";
+
+        const formData = new FormData();
+        formData.append("token", token);
+
+        try {
+            const response = await fetch("api/get_rooms.php", {  
+                method: "POST",
+                body: formData
+            });
+
+            const raw = await response.text();
+            console.log("get_rooms.php raw:", raw);
+
+            if (!response.ok) {
+                roomsListEl.innerHTML = `<p>Ошибка: статус ${response.status}</p>`;
+                return;
+            }
+
+            let data;
+            try {
+                data = JSON.parse(raw);
+            } catch (e) {
+                console.error("get_rooms JSON parse error:", e);
+                roomsListEl.innerHTML = "<p>Сервер вернул некорректный ответ, смотри консоль.</p>";
+                return;
+            }
+
+            console.log("Rooms JSON:", data);
+
+            if (data.status !== "success") {
+                // В случае ошибки выводим её в список комнат
+                roomsListEl.innerHTML = `<p>Ошибка: ${data.message || "не удалось загрузить комнаты"}</p>`;
+                return;
+            }
+
+            const rooms = data.rooms;
+
+            if (!rooms || rooms.length === 0) {
+                roomsListEl.innerHTML = "<p>Пока нет доступных комнат. Создайте первую!</p>";
+                return;
+            }
+
+            roomsListEl.innerHTML = "";
+
+            // Создаём карточку для каждой комнаты
+            rooms.forEach(room => {
+                const card = document.createElement("div");
+                card.className = "room-card";
+
+                card.innerHTML = `
+                    <div class="room-info">
+                        <div class="room-title">Комната №${room.game_id}</div>
+                        <div class="room-opponent">Соперник: ${room.opponent}</div>
+                    </div>
+                    <button class="btn-primary room-enter" data-game-id="${room.game_id}">Войти</button>
+                `;
+
+                roomsListEl.appendChild(card);
+            });
+
+            // Навешиваем обработчик на каждую кнопку "Войти"
+            document.querySelectorAll(".room-enter").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    joinRoom(btn.dataset.gameId);
+                });
+            });
+
+        } catch (err) {
+            console.error("loadRooms fetch error:", err);
+            roomsListEl.innerHTML = "<p>Ошибка подключения к серверу</p>";
+        }
+    }
+
+    // Кнопка "Создать комнату"
+    createBtn.addEventListener("click", async () => {
+        const formData = new FormData();
+        formData.append("token", token);
+
+        try {
+            const resp = await fetch("api/create_room.php", {
+                method: "POST",
+                body: formData
+            });
+
+            const raw = await resp.text();
+            console.log("create_room.php raw:", raw);
+
+            let data;
+            try {
+                data = JSON.parse(raw);
+            } catch (e) {
+                console.error("create_room JSON parse error:", e);
+                alert("Сервер вернул некорректный ответ при создании комнаты");
+                return;
+            }
+
+            console.log("Create room JSON:", data);
+
+            if (data.status === "success") {
+                // Если комната успешно создана сохраняем её id и переходим в игру
+                localStorage.setItem("gameId", data.game_id);
+                window.location.href = `game.html?game_id=${data.game_id}`;
+            } else {
+                alert(data.message || "Не удалось создать комнату");
+            }
+        } catch (err) {
+            console.error("createRoom fetch error:", err);
+            alert("Ошибка подключения к серверу");
+        }
+    });
+
+    // Вход в выбранную комнату
+    async function joinRoom(gameId) {
+        const formData = new FormData();
+        formData.append("token", token);
+        formData.append("game_id", gameId);
+
+        try {
+            const resp = await fetch("api/join_room.php", { 
+                method: "POST",
+                body: formData
+            });
+
+            const raw = await resp.text();
+            console.log("join_room.php raw:", raw);
+
+            let data;
+            try {
+                data = JSON.parse(raw);
+            } catch (e) {
+                console.error("join_room JSON parse error:", e);
+                alert("Сервер вернул некорректный ответ при входе в комнату");
+                return;
+            }
+
+            console.log("Join room JSON:", data);
+
+            if (data.status === "success") {
+                // Сохраняем id игры и переходим на игровое поле
+                localStorage.setItem("gameId", gameId);
+                window.location.href = `game.html?game_id=${gameId}`;
+            } else {
+                // Показываем ошибку и перезагружаем список комнат
+                alert(data.message || "Не удалось войти в комнату");
+                loadRooms();
+            }
+
+        } catch (err) {
+            console.error("joinRoom fetch error:", err);
+            alert("Ошибка подключения к серверу");
+        }
+    }
+
+    // Переход на страницу с правилами игры
+    rulesBtn.addEventListener("click", () => {
+        window.location.href = "rules.html";
+    });
+
+        // Старт: загружаем комнаты при открытии страницы
+        loadRooms();
+
+// Периодическое обновление списка комнат, если вкладка активна
+const ROOMS_REFRESH_MS = 2500;
+let roomsIntervalId = null;
+
+function startRoomsAutoRefresh() {
+    if (roomsIntervalId) return;
+    roomsIntervalId = setInterval(() => {
+        if (document.hidden) return;
+        loadRooms();
+    }, ROOMS_REFRESH_MS);
+}
+
+function stopRoomsAutoRefresh() {
+    if (!roomsIntervalId) return;
+    clearInterval(roomsIntervalId);
+    roomsIntervalId = null;
+}
+
+// Запускаем автообновление
+startRoomsAutoRefresh();
+
+document.addEventListener("visibilitychange", () => {
+    if (document.hidden) stopRoomsAutoRefresh();
+    else {
+        loadRooms();
+        startRoomsAutoRefresh();
+    }
+});
+
+window.addEventListener("beforeunload", stopRoomsAutoRefresh);
+
+});
+</script>
+
+</body>
+</html>
+
+

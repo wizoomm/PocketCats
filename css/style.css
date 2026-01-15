@@ -1,0 +1,536 @@
+
+
+  @font-face {
+    font-family: 'InterTight';
+    src: url('../fonts/InterTight-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'InterTight', Arial, sans-serif;
+    background-color: #5E5B6F;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+    max-width: 450px;
+    width: 100%;
+}
+
+.logo {
+    width: 259px;
+    height: 113px;
+    margin-bottom: 20px;
+}
+
+.logo img {
+    width: 100%;
+    height: 100%;
+}
+
+.rules {
+    width: 259px;
+    height: 113px;
+    margin-bottom: 60px;
+}
+
+.rules img {
+    width: 100%;
+    height: 100%;
+}
+
+.header {
+    text-align: center;
+}
+
+h1 {
+    font-size: 32px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.link-text {
+    font-size: 16px;
+    margin-top: 5px;
+}
+
+.link-text a {
+    color: #ED600A;
+    text-decoration: none;
+    margin-left: 8px;
+}
+
+.link-text a:hover {
+    text-decoration: underline;
+}
+
+.form-group {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+input[type="text"],
+input[type="password"] {
+    width: 100%;
+    padding: 15px;
+    border-radius: 8px;
+    border: none;
+    background-color: white;
+    font-size: 16px;
+    color: #333;
+}
+
+input[type="text"]::placeholder,
+input[type="password"]::placeholder {
+    color: #999;
+}
+
+.buttons {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+button {
+    width: 100%;
+    padding: 15px;
+    border-radius: 8px;
+    border: none;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: opacity 0.3s;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+.btn-primary {
+    background-color: #ED600A;
+    color: white;
+}
+
+.btn-secondary {
+    background-color: #3d3447;
+    color: white;
+}
+
+.game-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 20px;
+    height: auto;
+}
+
+.game-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-self: flex-start;
+    margin-top: 0;
+}
+
+.game-sidebar-rectangle {
+    background-color: #FFFFFF;
+    border-radius: 8px;
+    width: 300px;
+    height: 50px;
+    color: #5E5B6F;
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    font-size: 16px;
+}
+
+#leftInfo2.game-sidebar-rectangle {
+    height: auto !important;
+    min-height: 70px;
+    align-items: flex-start;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    flex-direction: column;
+    gap: 6px;
+}
+
+
+.game-sidebar p {
+    color: #5E5B6F;
+    font-size: 16px;
+}
+
+.game-sidebar-left p {
+    color: #FFFFFF;
+}
+.game-sidebar-rectangle-rules {
+    background-color: #3d3447;
+    border-radius: 8px;
+    width: 300px;
+    height: 50px;
+}
+
+.game-board {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    max-width: 700px;
+    width: 100%;
+    aspect-ratio: 1;
+}
+
+
+.game-tile {
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    transition: transform 0.2s;
+    border: none;
+    background: none;
+    padding: 0;
+}
+
+.game-tile:hover,
+.game-tile[data-state="front"]:hover,
+.game-tile[data-state="front-green"]:hover {
+    transform: scale(1.05);
+}
+
+.game-tile img {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.rooms-body .container {
+    max-width: 450px;
+    width: 100%;
+}
+
+.rooms-wrapper {
+    display: flex;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.rooms-list {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 8px;
+    height: 260px;
+}
+
+.rooms-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.rooms-list::-webkit-scrollbar-track {
+    background: #4F4C60;
+    border-radius: 4px;
+}
+
+.rooms-list::-webkit-scrollbar-thumb {
+    background: #ED600A;
+    border-radius: 4px;
+}
+
+.rooms-list::-webkit-scrollbar-thumb:hover {
+    background: #d45509;
+}
+
+.room-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #FFFFFF;
+    border-radius: 8px;
+    padding: 18px 32px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.room-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #2F2F2F;
+    margin-bottom: 4px;
+}
+
+.room-opponent {
+    font-size: 14px;
+    color: #8C8C8C;
+}
+
+.room-enter {
+    width: auto;
+    min-width: 110px;
+    padding: 10px 24px;
+    font-size: 14px;
+    border-radius: 10px;
+}
+
+
+.rooms-buttons {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 4px;
+}
+
+.rooms-buttons .btn-primary,
+.rooms-buttons .btn-secondary {
+    width: 100%;
+    padding: 16px;
+    font-size: 16px;
+    border-radius: 8px;
+}
+
+.rooms-buttons .btn-secondary {
+    background-color: #3d3447;
+    border: none;
+    color: #FFFFFF;
+}
+
+.logout-link {
+    text-align: center;
+    margin-top: 20px;
+    padding-bottom: 20px;
+}
+
+.logout-link a {
+    color: #8C8C8C;
+    text-decoration: none;
+    font-size: 16px;
+}
+
+.logout-link a:hover {
+    text-decoration: underline;
+    color: #A0A0A0;
+}
+
+.rules-body {
+    background-color: #5E5B6F;
+    padding: 40px 20px;
+}
+
+.rules-back-button {
+    max-width: 900px;
+    width: 100%;
+    margin: 0 auto 20px auto;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.rules-back-button .btn-secondary {
+    width: auto;
+    min-width: 110px;
+    padding: 10px 24px;
+}
+
+.rules-container {
+    max-width: 900px;
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.rules-title {
+    font-size: 48px;
+    font-weight: bold;
+    color: #ED600A;
+    text-align: center;
+    text-shadow: 
+        -2px -2px 0 #FFFFFF,
+        2px -2px 0 #FFFFFF,
+        -2px 2px 0 #FFFFFF,
+        2px 2px 0 #FFFFFF;
+    margin-bottom: 20px;
+}
+
+.rules-text-block {
+    color: #FFFFFF;
+    font-size: 16px;
+    line-height: 1.6;
+    text-align: left;
+}
+
+.rules-example {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    margin: 20px 0;
+}
+
+.rules-example-image {
+    flex-shrink: 0;
+}
+
+.rules-example-image img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+.rules-example-text {
+    color: #FFFFFF;
+    font-size: 16px;
+    line-height: 1.6;
+    flex: 1;
+}
+
+.rules-scoring {
+    margin-top: 40px;
+}
+
+.rules-scoring-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #FFFFFF;
+    margin-bottom: 20px;
+}
+
+.rules-scoring-example {
+    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+}
+
+.rules-scoring-image {
+    width: 100%;
+    max-width: 600px;
+}
+
+.rules-scoring-image img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.rules-scoring-text {
+    color: #FFFFFF;
+    font-size: 16px;
+    line-height: 1.6;
+    text-align: left;
+    max-width: 800px;
+}
+
+@media (max-width: 768px) {
+    .rules-title {
+        font-size: 36px;
+    }
+
+    .rules-example {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .rules-example-image {
+        width: 100%;
+    }
+}
+
+
+
+.game-board-wrap {
+  position: relative;
+}
+
+.board-overlay {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(30, 28, 45, 0.60);
+  backdrop-filter: blur(6px);
+  z-index: 10;
+}
+
+.board-overlay.is-visible {
+  display: flex;
+}
+
+.board-overlay__card {
+  width: 520px;
+  max-width: 90%;
+  padding: 32px 36px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+  text-align: center;
+}
+
+.board-overlay__title {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: #5E5B6F;
+}
+
+.board-overlay__text {
+  font-size: 16px;
+  line-height: 1.5;
+  color: #5E5B6F;
+  opacity: 0.92;
+}
+
+
+
+.clan-color-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-left: 8px;
+    vertical-align: middle;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.08);
+  }
+  
