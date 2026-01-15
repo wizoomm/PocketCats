@@ -1,11 +1,11 @@
 <div align="center">
-  <img src="pic/Group.svg" alt="Карманные Кошки" width="300">
+  <img src="pic/Group.svg" alt="Карманные Кошки" width="200">
   
-  # Карманные Кошки
+
   
   Браузерная онлайн-игра для двух игроков с базой данных и real-time обновлениями!
   
-  [Посмотреть демо-видео](#демо-видео) · [Перейти к игре](https://se.ifmo.ru/~s368382/pocketCats/entrance.html)
+  [Перейти к игре](https://se.ifmo.ru/~s368382/pocketCats/entrance.html)
 </div>
 
 ---
@@ -399,19 +399,6 @@ function computeAvailableTargets(tile, index) {
 - **Токен-аутентификация:** Безопасная авторизация через токены, хранящиеся в localStorage. Токены генерируются при регистрации/входе и проверяются при каждом запросе к API.
 - **Адаптивный дизайн:** Интерфейс адаптируется под разные размеры экранов с использованием CSS Flexbox и Grid.
 - **Визуальная обратная связь:** Подсветка доступных ходов и выбранных тайлов для улучшения пользовательского опыта.
-
-## Настройка для локального запуска
-
-1. Скопируйте `api/config.php.example` в `api/config.php`
-2. Заполните данные подключения к вашей базе данных PostgreSQL:
-   ```php
-   $host     = "your_host";
-   $port     = "5432";
-   $dbname   = "your_database";
-   $user     = "your_username";
-   $password = "your_password";
-   ```
-3. Создайте необходимые таблицы и хранимые процедуры в PostgreSQL (см. `pocketCats.txt`)
 
 ---
 
