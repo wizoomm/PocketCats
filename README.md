@@ -1,10 +1,14 @@
 <div align="center">
-  <img src="pic/Group.svg" alt="Карманные Кошки" width="200">
+  <img src="pic/Group.svg" alt="Карманные Кошки" width="300">
+  
+  # Карманные Кошки
+  
+  Браузерная онлайн-игра для двух игроков с базой данных и real-time обновлениями!
+  
+  [Посмотреть демо-видео](#демо-видео) · [Перейти к игре](https://se.ifmo.ru/~s368382/pocketCats/entrance.html)
 </div>
 
-Онлайн-игра для двух игроков на основе стратегической настольной игры с кошками и добычей.
-
-Ссылка на [демо игры](https://se.ifmo.ru/~s368382/pocketCats/entrance.html)
+---
 
 ## О проекте
 
@@ -21,6 +25,12 @@
 - Подсчёт очков и определение победителя
 
 ## Технологии
+
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat&logo=html5&logoColor=white)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat&logo=css3&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=black)
+![PHP](https://img.shields.io/badge/PHP-777BB4?style=flat&logo=php&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=flat&logo=postgresql&logoColor=white)
 
 - **Frontend:** HTML5, CSS3, JavaScript (Vanilla)
 - **Backend:** PHP 7.4+
@@ -376,7 +386,9 @@ function computeAvailableTargets(tile, index) {
 
 ## Демо-видео
 
-![Демо-видео](pic/gameplay-demo.gif)
+<div align="center">
+  <img src="pic/gameplay-demo.gif" alt="Демо-видео игрового процесса" width="600">
+</div>
 
 *Видео демонстрирует пример игрового процесса - ход одного игрока*
 
@@ -403,8 +415,12 @@ function computeAvailableTargets(tile, index) {
 
 ---
 
+<div align="center">
+
 **Автор:** Кручинина Дарья
 
 Проект разработан в рамках учебного курса.
 
-**Ссылка на проект:** [https://se.ifmo.ru/~s368382/pocketCats/entrance.html](https://se.ifmo.ru/~s368382/pocketCats/entrance.html)
+[Демо игры](https://se.ifmo.ru/~s368382/pocketCats/entrance.html) · [Правила оригинальной игры](https://hobbygames.ru/download/rules/karmannie-koshki-rules.pdf)
+
+</div>
